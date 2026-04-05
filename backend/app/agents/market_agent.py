@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import yfinance as yf
-
-
-def _validate_symbol(symbol: str) -> str:
-    cleaned_symbol = symbol.strip().upper()
-    if not cleaned_symbol:
-        raise ValueError("Stock symbol is required.")
-    return cleaned_symbol
+from app.agents.market_data import extract_close_prices, fetch_stock_history, validate_symbol
 
 
 def _calculate_confidence(short_ma: float, long_ma: float) -> float:
@@ -21,26 +14,18 @@ def _calculate_confidence(short_ma: float, long_ma: float) -> float:
     return max(0.0, min(1.0, confidence))
 
 
-def analyze_stock(symbol: str) -> dict[str, Any]:
+def analyze_stock(symbol: str, history: Any | None = None) -> dict[str, Any]:
     """
     Analyze a stock using recent price history and moving averages.
 
     Returns a dictionary with symbol, latest close price, 7-day MA,
     21-day MA, trend direction, and confidence score.
     """
-    validated_symbol = _validate_symbol(symbol)
+    validated_symbol = validate_symbol(symbol)
+    if history is None:
+        _, history = fetch_stock_history(validated_symbol)
 
-    try:
-        history = yf.Ticker(validated_symbol).history(period="30d", interval="1d")
-    except Exception as exc:  # pragma: no cover - depends on external service
-        raise RuntimeError("Failed to fetch stock data from yfinance.") from exc
-
-    if history.empty or "Close" not in history:
-        raise ValueError(f"No market data found for symbol '{validated_symbol}'.")
-
-    close_prices = history["Close"].dropna()
-    if close_prices.empty:
-        raise ValueError(f"No closing price data found for symbol '{validated_symbol}'.")
+    close_prices = extract_close_prices(history, validated_symbol)
 
     if len(close_prices) < 21:
         raise ValueError(
