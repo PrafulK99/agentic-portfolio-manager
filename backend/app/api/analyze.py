@@ -9,6 +9,7 @@ from app.agents.compliance_agent import check_compliance
 from app.agents.market_data import fetch_stock_history
 from app.agents.market_agent import analyze_stock
 from app.agents.risk_agent import analyze_risk
+from app.agents.strategy_agent import generate_decision
 
 router = APIRouter(tags=["analysis"])
 
@@ -41,10 +42,18 @@ class ComplianceResponse(BaseModel):
     notes: str
 
 
+class DecisionResponse(BaseModel):
+    decision: Literal["BUY", "SELL", "HOLD", "REJECT"]
+    allocation: float
+    confidence: float
+    reason: str
+
+
 class AnalyzeResponse(BaseModel):
     market_analysis: MarketAnalysisResponse
     risk_analysis: RiskAnalysisResponse
     compliance: ComplianceResponse
+    decision: DecisionResponse
 
 
 @router.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
@@ -54,10 +63,16 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         market_analysis = analyze_stock(symbol=symbol, history=history)
         risk_analysis = analyze_risk(symbol=symbol, history=history)
         compliance = check_compliance(risk_data=risk_analysis, amount=request.amount)
+        decision = generate_decision(
+            market_data=market_analysis,
+            risk_data=risk_analysis,
+            compliance_data=compliance,
+        )
         return AnalyzeResponse(
             market_analysis=MarketAnalysisResponse(**market_analysis),
             risk_analysis=RiskAnalysisResponse(**risk_analysis),
             compliance=ComplianceResponse(**compliance),
+            decision=DecisionResponse(**decision),
         )
     except ValueError as exc:
         raise HTTPException(
