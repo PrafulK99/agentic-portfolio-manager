@@ -17,7 +17,11 @@ from app.agents.market_data import fetch_stock_history
 from app.agents.risk_agent import analyze_risk
 from app.agents.strategy_agent import generate_decision
 from app.core.database import get_db
-from app.services.portfolio_service import add_to_portfolio
+from app.services.portfolio_service import (
+    add_to_portfolio,
+    calculate_portfolio_metrics,
+    get_portfolio,
+)
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -111,6 +115,84 @@ class ExecutePortfolioResponse(BaseModel):
     decision: DecisionDetails
     portfolio_entry: Optional[Dict] = None
     message: str
+
+
+class Holding(BaseModel):
+    """Individual portfolio holding."""
+
+    symbol: str
+    quantity: float
+    entry_price: float
+    current_price: float
+    profit_loss: float
+    allocation: float
+
+
+class PortfolioMetrics(BaseModel):
+    """Portfolio performance metrics."""
+
+    total_investment: float = Field(..., description="Total amount invested")
+    current_value: float = Field(..., description="Current total portfolio value")
+    total_profit_loss: float = Field(..., description="Total profit or loss")
+
+
+class GetPortfolioResponse(BaseModel):
+    """Response model for retrieving portfolio."""
+
+    holdings: list[Holding]
+    metrics: PortfolioMetrics
+
+
+@router.get(
+    "",
+    response_model=GetPortfolioResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get portfolio holdings and metrics",
+    description="Retrieve all portfolio holdings and calculated performance metrics",
+)
+def get_portfolio_overview(
+    db: Session = Depends(get_db),
+) -> GetPortfolioResponse:
+    """
+    Get portfolio holdings and metrics.
+    
+    Retrieves all current portfolio positions and calculates overall
+    portfolio performance metrics including total investment, current value,
+    and total profit/loss.
+    
+    Args:
+        db: Database session injected via dependency injection
+    
+    Returns:
+        GetPortfolioResponse containing holdings list and metrics
+    
+    Raises:
+        HTTPException: If database operation fails
+    """
+    try:
+        # Fetch portfolio holdings
+        holdings_data = get_portfolio(db=db)
+        holdings = [Holding(**holding) for holding in holdings_data]
+        
+        # Calculate portfolio metrics
+        metrics_data = calculate_portfolio_metrics(db=db)
+        metrics = PortfolioMetrics(**metrics_data)
+        
+        return GetPortfolioResponse(holdings=holdings, metrics=metrics)
+    
+    except RuntimeError as e:
+        # Handle service errors
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Service error: {str(e)}",
+        )
+    
+    except Exception as e:
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while retrieving portfolio",
+        )
 
 
 @router.post(

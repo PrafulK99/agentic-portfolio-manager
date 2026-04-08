@@ -5,7 +5,7 @@ This module contains business logic for adding, updating, and managing
 portfolio positions.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -108,3 +108,118 @@ def add_to_portfolio(
         # Rollback on any unexpected error
         db.rollback()
         raise RuntimeError(f"Unexpected error while adding to portfolio: {str(e)}")
+
+
+def get_portfolio(db: Session) -> List[Dict]:
+    """
+    Fetch all portfolio holdings.
+    
+    Retrieves all current portfolio positions from the database
+    with relevant information for display and analysis.
+    
+    Args:
+        db: SQLAlchemy database session
+    
+    Returns:
+        List of dictionaries containing:
+            - symbol: Stock ticker symbol
+            - quantity: Number of units held
+            - entry_price: Average purchase price per unit
+            - current_price: Current market price per unit
+            - profit_loss: Current profit/loss amount
+            - allocation: Portfolio allocation percentage
+    
+    Raises:
+        SQLAlchemyError: If database query fails
+    
+    Example:
+        holdings = get_portfolio(db_session)
+        for holding in holdings:
+            print(f"{holding['symbol']}: {holding['quantity']} units")
+    """
+    try:
+        # Query all portfolio holdings
+        portfolios = db.query(Portfolio).all()
+        
+        # Convert to dictionaries for response
+        holdings = [
+            {
+                "symbol": p.symbol,
+                "quantity": float(p.quantity),
+                "entry_price": float(p.entry_price),
+                "current_price": float(p.current_price),
+                "profit_loss": float(p.profit_loss),
+                "allocation": float(p.allocation),
+            }
+            for p in portfolios
+        ]
+        
+        return holdings
+    
+    except SQLAlchemyError as e:
+        raise RuntimeError(f"Database error while fetching portfolio: {str(e)}")
+    
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error while fetching portfolio: {str(e)}")
+
+
+def calculate_portfolio_metrics(db: Session) -> Dict[str, float]:
+    """
+    Calculate overall portfolio metrics.
+    
+    Computes total investment, current value, and profit/loss
+    across all portfolio holdings.
+    
+    Args:
+        db: SQLAlchemy database session
+    
+    Returns:
+        Dictionary containing:
+            - total_investment: Sum of (entry_price * quantity) for all holdings
+            - current_value: Sum of (current_price * quantity) for all holdings
+            - total_profit_loss: Difference between current value and total investment
+    
+    Raises:
+        SQLAlchemyError: If database query fails
+    
+    Example:
+        metrics = calculate_portfolio_metrics(db_session)
+        print(f"Current Value: ${metrics['current_value']:.2f}")
+        print(f"Total Profit/Loss: ${metrics['total_profit_loss']:.2f}")
+    """
+    try:
+        # Query all portfolio holdings
+        portfolios = db.query(Portfolio).all()
+        
+        # Handle empty portfolio
+        if not portfolios:
+            return {
+                "total_investment": 0.0,
+                "current_value": 0.0,
+                "total_profit_loss": 0.0,
+            }
+        
+        # Calculate metrics
+        total_investment = sum(
+            float(p.entry_price) * float(p.quantity) for p in portfolios
+        )
+        current_value = sum(
+            float(p.current_price) * float(p.quantity) for p in portfolios
+        )
+        total_profit_loss = current_value - total_investment
+        
+        return {
+            "total_investment": round(total_investment, 2),
+            "current_value": round(current_value, 2),
+            "total_profit_loss": round(total_profit_loss, 2),
+        }
+    
+    except SQLAlchemyError as e:
+        raise RuntimeError(
+            f"Database error while calculating portfolio metrics: {str(e)}"
+        )
+    
+    except Exception as e:
+        raise RuntimeError(
+            f"Unexpected error while calculating portfolio metrics: {str(e)}"
+        )
