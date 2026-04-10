@@ -49,14 +49,14 @@ def add_to_portfolio(
         response = add_to_portfolio(
             db=db_session,
             symbol="AAPL",
-            allocation=20.0,
+            allocation=0.2,
             amount=10000.0,
             current_price=150.5
         )
     """
     # Validate inputs
-    if allocation <= 0 or allocation > 100:
-        raise ValueError("Allocation must be between 0 and 100")
+    if allocation <= 0 or allocation > 1:
+        raise ValueError("Allocation must be between 0 and 1 (decimal format, e.g., 0.2 for 20%)")
     
     if current_price <= 0:
         raise ValueError("Current price must be greater than 0")
@@ -65,11 +65,11 @@ def add_to_portfolio(
         raise ValueError("Amount must be greater than 0")
     
     try:
-        # Calculate investment amount based on allocation percentage
-        invested_amount = amount * (allocation / 100)
+        # Calculate investment amount based on allocation (as decimal)
+        invested_amount = amount * allocation
         
-        # Calculate quantity of units
-        quantity = invested_amount / current_price
+        # Calculate quantity of units (precision to 4 decimal places)
+        quantity = round(invested_amount / current_price, 4)
         
         # Create new portfolio holding
         portfolio = Portfolio(

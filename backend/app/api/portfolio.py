@@ -43,8 +43,8 @@ class AddPortfolioRequest(BaseModel):
     allocation: float = Field(
         ...,
         gt=0,
-        le=100,
-        description="Portfolio allocation percentage (0-100)"
+        le=1,
+        description="Portfolio allocation as decimal (0-1, e.g., 0.2 for 20%)"
     )
     current_price: float = Field(
         ...,
@@ -58,7 +58,7 @@ class AddPortfolioRequest(BaseModel):
             "example": {
                 "symbol": "AAPL",
                 "amount": 10000.0,
-                "allocation": 20.0,
+                "allocation": 0.2,
                 "current_price": 180.50,
             }
         }
