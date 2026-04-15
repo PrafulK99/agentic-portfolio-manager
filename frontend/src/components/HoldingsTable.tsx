@@ -34,7 +34,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
           </tr>
         </thead>
         <tbody>
-          {holdings.map((holding) => {
+          {holdings.map((holding, index) => {
             const isPositive = holding.profit_loss >= 0
             const gainPercentage =
               holding.entry_price > 0
@@ -43,7 +43,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
 
             return (
               <tr
-                key={holding.symbol}
+                key={`${holding.symbol}-${index}`}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
                 <td className="py-4 px-4">

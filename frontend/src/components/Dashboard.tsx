@@ -58,7 +58,7 @@ export function Dashboard() {
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No Holdings Yet</h3>
             <p className="text-gray-600 mb-6">Your portfolio is empty. Start by adding your first position!</p>
             <div className="max-w-md mx-auto">
-              <DecisionPanel />
+              <DecisionPanel onTradeSuccess={fetchPortfolio} />
             </div>
           </Card>
         )}
@@ -72,7 +72,7 @@ export function Dashboard() {
                 <HoldingsTable holdings={portfolio.holdings} />
               </div>
               <div>
-                <DecisionPanel />
+                <DecisionPanel onTradeSuccess={fetchPortfolio} />
               </div>
             </div>
           </>

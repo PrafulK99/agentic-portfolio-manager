@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 interface CardProps {
   children: ReactNode
@@ -20,6 +20,7 @@ interface ButtonProps {
   onClick?: () => void
   variant?: 'primary' | 'secondary' | 'danger'
   className?: string
+  disabled?: boolean
 }
 
 export function Button({
@@ -27,6 +28,7 @@ export function Button({
   onClick,
   variant = 'primary',
   className = '',
+  disabled = false,
 }: ButtonProps) {
   const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-colors'
   const variants = {
@@ -38,7 +40,8 @@ export function Button({
   return (
     <button
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${className}`}
+      disabled={disabled}
+      className={`${baseStyles} ${variants[variant]} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}
     >
       {children}
     </button>
