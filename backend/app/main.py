@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analyze import router as analyze_router
 from app.api.portfolio import router as portfolio_router
@@ -6,6 +7,14 @@ from app.api.routes import router as root_router
 from app.core.database import create_tables
 
 app = FastAPI(title="Agentic AI Portfolio Manager API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")

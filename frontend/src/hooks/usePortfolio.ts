@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { fetchPortfolio } from '../services/api'
+import { getPortfolio } from '../services/api'
 
 interface Portfolio {
   holdings: any[]
@@ -25,7 +25,7 @@ export const usePortfolio = () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchPortfolio()
+      const data = await getPortfolio()
       setPortfolio(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
