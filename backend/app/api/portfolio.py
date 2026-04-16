@@ -13,10 +13,10 @@ from sqlalchemy.orm import Session
 
 from app.agents.compliance_agent import check_compliance
 from app.agents.market_agent import analyze_stock
-from app.agents.market_data import fetch_stock_history
 from app.agents.risk_agent import analyze_risk
 from app.agents.strategy_agent import generate_decision
 from app.core.database import get_db
+from app.services.market_data_service import get_stock_data
 from app.services.portfolio_service import (
     add_to_portfolio,
     calculate_portfolio_metrics,
@@ -285,7 +285,7 @@ def execute_portfolio_decision(
     """
     try:
         # Reuse existing analysis logic (no code duplication)
-        symbol, history = fetch_stock_history(request.symbol)
+        symbol, history = get_stock_data(request.symbol)
         market_analysis = analyze_stock(symbol=symbol, history=history)
         risk_analysis = analyze_risk(symbol=symbol, history=history)
         compliance = check_compliance(risk_data=risk_analysis, amount=request.amount)

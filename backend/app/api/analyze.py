@@ -6,10 +6,10 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.agents.compliance_agent import check_compliance
-from app.agents.market_data import fetch_stock_history
 from app.agents.market_agent import analyze_stock
 from app.agents.risk_agent import analyze_risk
 from app.agents.strategy_agent import generate_decision
+from app.services.market_data_service import get_stock_data
 
 router = APIRouter(tags=["analysis"])
 
@@ -59,7 +59,7 @@ class AnalyzeResponse(BaseModel):
 @router.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
 def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     try:
-        symbol, history = fetch_stock_history(request.symbol)
+        symbol, history = get_stock_data(request.symbol)
         market_analysis = analyze_stock(symbol=symbol, history=history)
         risk_analysis = analyze_risk(symbol=symbol, history=history)
         compliance = check_compliance(risk_data=risk_analysis, amount=request.amount)

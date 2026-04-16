@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.agents.market_data import extract_close_prices, fetch_stock_history, validate_symbol
+from app.services.market_data_service import (
+    extract_close_prices,
+    validate_symbol,
+)
 
 
 def _calculate_confidence(short_ma: float, long_ma: float) -> float:
@@ -14,17 +17,24 @@ def _calculate_confidence(short_ma: float, long_ma: float) -> float:
     return max(0.0, min(1.0, confidence))
 
 
-def analyze_stock(symbol: str, history: Any | None = None) -> dict[str, Any]:
+def analyze_stock(symbol: str, history: Any) -> dict[str, Any]:
     """
     Analyze a stock using recent price history and moving averages.
 
-    Returns a dictionary with symbol, latest close price, 7-day MA,
-    21-day MA, trend direction, and confidence score.
+    This agent expects pre-fetched stock data. It does NOT fetch data from yfinance.
+    Data must be fetched at the API layer and passed to this agent.
+
+    Args:
+        symbol: Stock ticker symbol (will be validated)
+        history: Pre-fetched pandas DataFrame with OHLCV data (required, not optional)
+
+    Returns:
+        Dictionary with symbol, current price, short/long MAs, trend, and confidence score.
+
+    Raises:
+        ValueError: If data validation fails or insufficient data for analysis
     """
     validated_symbol = validate_symbol(symbol)
-    if history is None:
-        _, history = fetch_stock_history(validated_symbol)
-
     close_prices = extract_close_prices(history, validated_symbol)
 
     if len(close_prices) < 21:
