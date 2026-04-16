@@ -11,12 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.agents.compliance_agent import check_compliance
-from app.agents.market_agent import analyze_stock
-from app.agents.risk_agent import analyze_risk
-from app.agents.strategy_agent import generate_decision
+from app.agents.orchestrator import run_analysis
 from app.core.database import get_db
-from app.services.market_data_service import get_stock_data
 from app.services.portfolio_service import (
     add_to_portfolio,
     calculate_portfolio_metrics,
@@ -269,7 +265,7 @@ def execute_portfolio_decision(
     """
     Execute an AI-driven portfolio decision.
     
-    This endpoint calls the analysis agents to evaluate a stock and determine
+    This endpoint calls the orchestrator to analyze a stock and determine
     if it should be added to the portfolio. If the decision is BUY, the position
     is added to the database automatically.
     
@@ -284,19 +280,15 @@ def execute_portfolio_decision(
         HTTPException: If analysis fails or decision cannot be made
     """
     try:
-        # Reuse existing analysis logic (no code duplication)
-        symbol, history = get_stock_data(request.symbol)
-        market_analysis = analyze_stock(symbol=symbol, history=history)
-        risk_analysis = analyze_risk(symbol=symbol, history=history)
-        compliance = check_compliance(risk_data=risk_analysis, amount=request.amount)
-        decision = generate_decision(
-            market_data=market_analysis,
-            risk_data=risk_analysis,
-            compliance_data=compliance,
-        )
+        # Run complete analysis via orchestrator
+        analysis_result = run_analysis(symbol=request.symbol, amount=request.amount)
         
-        # Extract current price from market analysis
-        current_price = market_analysis.get("current_price")
+        # Extract analysis components
+        market_analysis = analysis_result["market_analysis"]
+        risk_analysis = analysis_result["risk_analysis"]
+        compliance = analysis_result["compliance"]
+        decision = analysis_result["decision"]
+        current_price = analysis_result["current_price"]
         
         # Prepare decision response
         decision_details = DecisionDetails(
@@ -338,7 +330,7 @@ def execute_portfolio_decision(
         )
     
     except RuntimeError as e:
-        # Handle service errors (agents, database, etc.)
+        # Handle service errors (orchestrator, database, etc.)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Service error: {str(e)}",

@@ -5,11 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.agents.compliance_agent import check_compliance
-from app.agents.market_agent import analyze_stock
-from app.agents.risk_agent import analyze_risk
-from app.agents.strategy_agent import generate_decision
-from app.services.market_data_service import get_stock_data
+from app.agents.orchestrator import run_analysis
 
 router = APIRouter(tags=["analysis"])
 
@@ -58,21 +54,21 @@ class AnalyzeResponse(BaseModel):
 
 @router.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
 def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+    """
+    Analyze a stock and return market, risk, compliance, and decision analysis.
+    
+    Delegates to orchestrator for business logic - API layer is thin.
+    """
     try:
-        symbol, history = get_stock_data(request.symbol)
-        market_analysis = analyze_stock(symbol=symbol, history=history)
-        risk_analysis = analyze_risk(symbol=symbol, history=history)
-        compliance = check_compliance(risk_data=risk_analysis, amount=request.amount)
-        decision = generate_decision(
-            market_data=market_analysis,
-            risk_data=risk_analysis,
-            compliance_data=compliance,
-        )
+        # Run complete analysis workflow via orchestrator
+        analysis_result = run_analysis(symbol=request.symbol, amount=request.amount)
+        
+        # Map orchestrator output to response models
         return AnalyzeResponse(
-            market_analysis=MarketAnalysisResponse(**market_analysis),
-            risk_analysis=RiskAnalysisResponse(**risk_analysis),
-            compliance=ComplianceResponse(**compliance),
-            decision=DecisionResponse(**decision),
+            market_analysis=MarketAnalysisResponse(**analysis_result["market_analysis"]),
+            risk_analysis=RiskAnalysisResponse(**analysis_result["risk_analysis"]),
+            compliance=ComplianceResponse(**analysis_result["compliance"]),
+            decision=DecisionResponse(**analysis_result["decision"]),
         )
     except ValueError as exc:
         raise HTTPException(
