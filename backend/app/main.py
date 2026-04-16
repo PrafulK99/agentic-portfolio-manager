@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analyze import router as analyze_router
+from app.api.chart import router as chart_router
 from app.api.portfolio import router as portfolio_router
 from app.api.routes import router as root_router
 from app.core.database import create_tables
@@ -23,6 +24,8 @@ async def startup_event() -> None:
     create_tables()
 
 
+
 app.include_router(root_router)
 app.include_router(analyze_router, prefix="/api")
+app.include_router(chart_router, prefix="/api")
 app.include_router(portfolio_router, prefix="/api")

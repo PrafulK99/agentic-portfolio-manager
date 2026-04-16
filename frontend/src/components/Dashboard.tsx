@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { PortfolioSummary } from './PortfolioSummary'
 import { HoldingsTable } from './HoldingsTable'
 import { DecisionPanel } from './DecisionPanel'
+import { StockChart } from './StockChart'
 import { Card } from './common'
 
 interface PortfolioData {
@@ -66,6 +67,11 @@ export function Dashboard() {
         {portfolio && portfolio.holdings?.length > 0 && (
           <>
             <PortfolioSummary metrics={portfolio.metrics} />
+
+            {/* Stock Chart for primary holding */}
+            <div className="mb-8">
+              <StockChart symbol={portfolio.holdings[0].symbol} height={350} />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">

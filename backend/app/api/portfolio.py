@@ -48,9 +48,8 @@ class AddPortfolioRequest(BaseModel):
         description="Current market price per unit"
     )
 
-    class Config:
-        """Pydantic config."""
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "symbol": "AAPL",
                 "amount": 10000.0,
@@ -58,6 +57,7 @@ class AddPortfolioRequest(BaseModel):
                 "current_price": 180.50,
             }
         }
+    }
 
 
 class AddPortfolioResponse(BaseModel):
@@ -85,14 +85,14 @@ class ExecutePortfolioRequest(BaseModel):
         description="Total investment amount in base currency"
     )
 
-    class Config:
-        """Pydantic config."""
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "symbol": "AAPL",
                 "amount": 10000.0,
             }
         }
+    }
 
 
 class DecisionDetails(BaseModel):
