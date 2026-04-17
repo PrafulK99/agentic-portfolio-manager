@@ -65,7 +65,11 @@ def run_analysis(symbol: str, amount: float) -> dict[str, Any]:
                 "decision": "BUY" | "SELL" | "HOLD" | "REJECT",
                 "allocation": float,
                 "confidence": float,
-                "reason": str
+                "explanation": {
+                    "summary": str,
+                    "factors": list[str],
+                    "confidence": float
+                }
             },
             "current_price": float
         }

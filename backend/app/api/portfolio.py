@@ -98,10 +98,15 @@ class ExecutePortfolioRequest(BaseModel):
 class DecisionDetails(BaseModel):
     """AI decision details."""
 
+    class DecisionExplanation(BaseModel):
+        summary: str
+        factors: list[str]
+        confidence: float
+
     decision: Literal["BUY", "SELL", "HOLD", "REJECT"]
     allocation: float
     confidence: float
-    reason: str
+    explanation: DecisionExplanation
     current_price: float
 
 
@@ -295,7 +300,7 @@ def execute_portfolio_decision(
             decision=decision["decision"],
             allocation=decision["allocation"],
             confidence=decision["confidence"],
-            reason=decision["reason"],
+            explanation=decision["explanation"],
             current_price=current_price,
         )
         

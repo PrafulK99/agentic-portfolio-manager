@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Card, Button } from './common'
+import { analyzeStock, executeTrade } from '../services/api'
+import { AIExplanationPanel, type AIExplanation } from './AIExplanationPanel'
 
 interface DecisionPanelProps {
   onTradeSuccess?: () => Promise<void> | void
@@ -11,11 +13,12 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [explanation, setExplanation] = useState<AIExplanation | null>(null)
 
-  const handleExecute = async () => {
+  const validateInputs = () => {
     if (!symbol || !amount) {
       setErrorMessage('Please fill in all fields')
-      return
+      return null
     }
 
     const inputSymbol = symbol.trim().toUpperCase()
@@ -23,34 +26,49 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
 
     if (!inputSymbol || Number.isNaN(inputAmount) || inputAmount <= 0) {
       setErrorMessage('Please enter a valid symbol and amount')
-      return
+      return null
     }
+
+    return { inputSymbol, inputAmount }
+  }
+
+  const handleAnalyze = async () => {
+    const validated = validateInputs()
+    if (!validated) return
 
     setLoading(true)
     setSuccessMessage('')
     setErrorMessage('')
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/portfolio/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: inputSymbol,
-          amount: inputAmount,
-        }),
-      })
+      const response = await analyzeStock(validated.inputSymbol, validated.inputAmount)
+      setExplanation(response.decision.explanation)
+      setSuccessMessage(`Analysis complete. Recommendation: ${response.decision.decision}`)
+    } catch (error) {
+      console.error('Error analyzing stock:', error)
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to analyze stock')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+  const handleExecute = async () => {
+    const validated = validateInputs()
+    if (!validated) return
 
-      await response.json()
+    setLoading(true)
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    try {
+      const response = await executeTrade(validated.inputSymbol, validated.inputAmount)
+      setExplanation(response.decision.explanation)
 
       if (onTradeSuccess) {
         await onTradeSuccess()
       }
 
-      setSuccessMessage('Trade executed successfully')
+      setSuccessMessage(response.message || 'Trade executed successfully')
       setSymbol('')
       setAmount('')
     } catch (error) {
@@ -93,7 +111,11 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
         </div>
 
         <Button onClick={handleExecute} variant="primary" className="w-full" disabled={loading}>
-          {loading ? 'Executing trade...' : 'Execute Trade'}
+          {loading ? 'Processing...' : 'Execute Trade'}
+        </Button>
+
+        <Button onClick={handleAnalyze} variant="secondary" className="w-full" disabled={loading}>
+          {loading ? 'Processing...' : 'Analyze Only'}
         </Button>
       </div>
 
@@ -111,9 +133,11 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
 
       <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <p className="text-sm text-blue-900">
-          Tip: Enter a stock symbol and amount to execute AI-assisted portfolio trades.
+          Tip: Analyze first for clarity, then execute when confidence is acceptable.
         </p>
       </div>
+
+      {explanation && <AIExplanationPanel explanation={explanation} />}
     </Card>
   )
 }

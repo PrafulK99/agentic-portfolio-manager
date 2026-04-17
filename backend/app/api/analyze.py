@@ -39,10 +39,15 @@ class ComplianceResponse(BaseModel):
 
 
 class DecisionResponse(BaseModel):
+    class ExplanationResponse(BaseModel):
+        summary: str
+        factors: list[str]
+        confidence: float
+
     decision: Literal["BUY", "SELL", "HOLD", "REJECT"]
     allocation: float
     confidence: float
-    reason: str
+    explanation: ExplanationResponse
 
 
 class AnalyzeResponse(BaseModel):
