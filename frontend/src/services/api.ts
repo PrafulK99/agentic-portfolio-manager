@@ -142,3 +142,66 @@ export const analyzeStock = async (symbol: string, amount: number) => {
     throw new Error(`Failed to analyze stock: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
+
+/**
+ * Fetch decision history
+ * Fallback to mock data if backend not implemented
+ */
+export const getDecisionHistory = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/history`);
+    if (response.ok) {
+      return await handleResponse(response);
+    }
+  } catch {
+    console.warn('Backend history endpoint not available. Using mock data.');
+  }
+
+  // Return mock data for UI completeness since API is not implemented yet
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        {
+          id: '1',
+          symbol: 'AAPL',
+          decision: 'BUY',
+          confidence: 0.89,
+          reason: 'Strong bullish trend with solid moving average crossover. Favorable risk/reward profile and high compliance pass.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString()
+        },
+        {
+          id: '2',
+          symbol: 'TSLA',
+          decision: 'HOLD',
+          confidence: 0.65,
+          reason: 'Neutral technical indicators. Volatility is slightly high, suggesting waiting for a better entry point.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString()
+        },
+        {
+          id: '3',
+          symbol: 'MSFT',
+          decision: 'SELL',
+          confidence: 0.78,
+          reason: 'Bearish divergence in short-term MAs. Risk profile indicates overextension.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString()
+        },
+        {
+          id: '4',
+          symbol: 'NVDA',
+          decision: 'BUY',
+          confidence: 0.92,
+          reason: 'Exceptional momentum breaking above resistance and positive fundamental triggers aligned.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString()
+        },
+        {
+          id: '5',
+          symbol: 'GME',
+          decision: 'REJECT',
+          confidence: 0.85,
+          reason: 'Risk tolerance exceeded. Volatility too high for current portfolio allocation rules.',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 18).toISOString()
+        }
+      ]);
+    }, 800);
+  });
+}

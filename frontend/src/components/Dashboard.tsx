@@ -40,15 +40,13 @@ export function Dashboard() {
   if (loading) return <div>Loading...</div>
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-3xl font-bold text-blue-600">AI Portfolio Manager</h1>
-          <p className="text-gray-600 text-sm mt-1">AI-powered portfolio analysis and management system</p>
-        </div>
-      </nav>
+    <div className="space-y-6 flex flex-col h-full">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Portfolio Manager</h1>
+        <p className="text-gray-600 text-sm mt-1">AI-powered portfolio analysis and management system</p>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 w-full space-y-6">
         <Card className="p-4 mb-6">
           <h3 className="text-lg font-semibold mb-2">Portfolio Data (Raw)</h3>
           <pre className="text-xs overflow-auto bg-gray-50 p-3 rounded">{JSON.stringify(portfolio, null, 2)}</pre>
@@ -83,11 +81,7 @@ export function Dashboard() {
             </div>
           </>
         )}
-
-        <footer className="mt-12 text-center text-gray-600 text-sm">
-          <p>Copyright 2026 Agentic Portfolio Manager. All rights reserved.</p>
-        </footer>
-      </main>
+      </div>
     </div>
   )
 }
