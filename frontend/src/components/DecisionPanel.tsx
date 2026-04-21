@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Card, Button } from './common'
 import { analyzeStock, executeTrade } from '../services/api'
 import { AIExplanationPanel, type AIExplanation } from './AIExplanationPanel'
+import { Input, Button } from './common'
+import { Zap, BarChart3, Lightbulb, AlertCircle, CheckCircle } from 'lucide-react'
 
 interface DecisionPanelProps {
   onTradeSuccess?: () => Promise<void> | void
@@ -20,32 +21,26 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
       setErrorMessage('Please fill in all fields')
       return null
     }
-
     const inputSymbol = symbol.trim().toUpperCase()
     const inputAmount = Number(amount)
-
     if (!inputSymbol || Number.isNaN(inputAmount) || inputAmount <= 0) {
       setErrorMessage('Please enter a valid symbol and amount')
       return null
     }
-
     return { inputSymbol, inputAmount }
   }
 
   const handleAnalyze = async () => {
     const validated = validateInputs()
     if (!validated) return
-
     setLoading(true)
     setSuccessMessage('')
     setErrorMessage('')
-
     try {
       const response = await analyzeStock(validated.inputSymbol, validated.inputAmount)
       setExplanation(response.decision.explanation)
-      setSuccessMessage(`Analysis complete. Recommendation: ${response.decision.decision}`)
+      setSuccessMessage(`Analysis complete · Recommendation: ${response.decision.decision}`)
     } catch (error) {
-      console.error('Error analyzing stock:', error)
       setErrorMessage(error instanceof Error ? error.message : 'Failed to analyze stock')
     } finally {
       setLoading(false)
@@ -55,24 +50,17 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
   const handleExecute = async () => {
     const validated = validateInputs()
     if (!validated) return
-
     setLoading(true)
     setSuccessMessage('')
     setErrorMessage('')
-
     try {
       const response = await executeTrade(validated.inputSymbol, validated.inputAmount)
       setExplanation(response.decision.explanation)
-
-      if (onTradeSuccess) {
-        await onTradeSuccess()
-      }
-
+      if (onTradeSuccess) await onTradeSuccess()
       setSuccessMessage(response.message || 'Trade executed successfully')
       setSymbol('')
       setAmount('')
     } catch (error) {
-      console.error('Error executing decision:', error)
       setErrorMessage(error instanceof Error ? error.message : 'Failed to execute trade')
     } finally {
       setLoading(false)
@@ -80,64 +68,93 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
   }
 
   return (
-    <Card className="p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">AI Decision Panel</h2>
+    <div className="p-6 space-y-5">
+      {/* ── Header ────────────────────────────────────── */}
+      <div className="space-y-2 pb-4 border-b border-slate-800/50">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+            <Zap className="w-4 h-4 text-blue-400" />
+          </div>
+          <h2 className="text-sm font-semibold text-slate-50">Execute Trade</h2>
+        </div>
+        <p className="text-xs text-slate-500 pl-10">AI-analyzed recommendations</p>
+      </div>
 
+      {/* ── Form Inputs ────────────────────────────────── */}
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Stock Symbol</label>
-          <input
-            type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            placeholder="e.g., AAPL"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={loading}
-          />
-        </div>
+        <Input
+          label="Stock Symbol"
+          value={symbol}
+          onChange={(val) => setSymbol(val.toUpperCase())}
+          placeholder="e.g. AAPL, MSFT, GOOGL"
+          type="text"
+          disabled={loading}
+          icon={<BarChart3 className="w-4 h-4 text-slate-600" />}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Investment Amount ($)</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="e.g., 1000"
-            min="0"
-            step="100"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={loading}
-          />
-        </div>
+        <Input
+          label="Investment Amount (USD)"
+          value={amount}
+          onChange={setAmount}
+          placeholder="1000"
+          type="number"
+          disabled={loading}
+          icon={<span className="text-slate-600 font-medium">$</span>}
+        />
+      </div>
 
-        <Button onClick={handleExecute} variant="primary" className="w-full" disabled={loading}>
+      {/* ── Action Buttons ────────────────────────────── */}
+      <div className="space-y-2.5">
+        <Button
+          onClick={handleExecute}
+          disabled={loading}
+          variant="primary"
+          size="md"
+          className="w-full"
+          isLoading={loading}
+          icon={!loading && <Zap className="w-4 h-4" />}
+        >
           {loading ? 'Processing...' : 'Execute Trade'}
         </Button>
 
-        <Button onClick={handleAnalyze} variant="secondary" className="w-full" disabled={loading}>
-          {loading ? 'Processing...' : 'Analyze Only'}
+        <Button
+          onClick={handleAnalyze}
+          disabled={loading}
+          variant="secondary"
+          size="md"
+          className="w-full"
+          isLoading={loading}
+          icon={!loading && <BarChart3 className="w-4 h-4" />}
+        >
+          {loading ? 'Analyzing...' : 'Analyze Only'}
         </Button>
       </div>
 
+      {/* ── Status Messages ───────────────────────────── */}
       {successMessage && (
-        <div className="mt-4 p-3 rounded-lg border border-green-300 bg-green-50 text-green-800 text-sm">
-          {successMessage}
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+          <p className="text-xs font-medium text-emerald-300 leading-relaxed">{successMessage}</p>
         </div>
       )}
 
       {errorMessage && (
-        <div className="mt-4 p-3 rounded-lg border border-red-300 bg-red-50 text-red-800 text-sm">
-          {errorMessage}
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20">
+          <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+          <p className="text-xs font-medium text-red-300 leading-relaxed">{errorMessage}</p>
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-sm text-blue-900">
-          Tip: Analyze first for clarity, then execute when confidence is acceptable.
+      {/* ── Tip Banner ────────────────────────────────── */}
+      <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-800/30 border border-slate-700/30">
+        <Lightbulb className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Run analysis first to see AI recommendations with confidence scores, then execute when ready.
         </p>
       </div>
 
+      {/* ── AI Explanation Panel ──────────────────────── */}
       {explanation && <AIExplanationPanel explanation={explanation} />}
-    </Card>
+    </div>
   )
 }

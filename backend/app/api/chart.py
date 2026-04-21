@@ -23,9 +23,11 @@ class ChartDataPoint(BaseModel):
 
 
 class ChartResponse(BaseModel):
-    """Chart data response."""
+    """Chart data response with currency information."""
 
     symbol: str = Field(..., description="Stock ticker symbol")
+    currency: str = Field(default="USD", description="Currency code (e.g., USD, EUR, INR)")
+    current_price: float = Field(..., description="Most recent closing price")
     data: list[ChartDataPoint] = Field(..., description="Historical price data points")
     status: Literal["success"] = Field(default="success", description="Response status")
 
@@ -64,8 +66,10 @@ def get_chart_data(symbol: str) -> ChartResponse:
     symbol_upper = symbol.strip().upper()
 
     try:
-        # Fetch 30 days of historical data
+        # Fetch ticker object to get metadata (currency)
         ticker = yf.Ticker(symbol_upper)
+        
+        # Fetch 30 days of historical data
         history = ticker.history(period="1mo")
 
         # Validate we got data
@@ -81,6 +85,17 @@ def get_chart_data(symbol: str) -> ChartResponse:
                 detail=f"Invalid data structure returned for '{symbol_upper}'.",
             )
 
+        # Extract currency from ticker info (default to USD if not available)
+        currency = "USD"
+        try:
+            # Safely try to get currency from ticker info
+            info = ticker.info
+            if isinstance(info, dict) and "currency" in info:
+                currency = info.get("currency", "USD").upper()
+        except Exception:
+            # If currency fetch fails, default to USD
+            pass
+
         # Convert to chart data points
         data_points: list[ChartDataPoint] = []
         for date, row in history.iterrows():
@@ -93,9 +108,14 @@ def get_chart_data(symbol: str) -> ChartResponse:
                 )
             )
 
-        # Return response
+        # Get current price (last available data point)
+        current_price = float(history["Close"].iloc[-1]) if not history.empty else 0.0
+
+        # Return response with currency information
         return ChartResponse(
             symbol=symbol_upper,
+            currency=currency,
+            current_price=current_price,
             data=data_points,
         )
 
