@@ -5,7 +5,7 @@
 /**
  * Format a number as currency
  */
-export const formatCurrency = (value: number, currency = 'USD'): string => {
+export const formatCurrency = (value: number, currency = 'INR'): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,

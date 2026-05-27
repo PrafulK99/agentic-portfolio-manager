@@ -3,6 +3,7 @@ import Layout from '../components/Layout'
 import Dashboard from './Dashboard'
 import Analyze from './Analyze'
 import History from './History'
+import Portfolio from './Portfolio'
 import PortfolioDetail from './PortfolioDetail'
 
 export default function App() {
@@ -12,8 +13,9 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="analyze" element={<Analyze />} />
-          <Route path="history" element={<History />} />
+          <Route path="portfolio" element={<Portfolio />} />
           <Route path="portfolio/:symbol" element={<PortfolioDetail />} />
+          <Route path="history" element={<History />} />
         </Route>
       </Routes>
     </BrowserRouter>

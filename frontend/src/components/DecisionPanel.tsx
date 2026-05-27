@@ -93,13 +93,13 @@ export function DecisionPanel({ onTradeSuccess }: DecisionPanelProps) {
         />
 
         <Input
-          label="Investment Amount (USD)"
+          label="Investment Amount (INR)"
           value={amount}
           onChange={setAmount}
           placeholder="1000"
           type="number"
           disabled={loading}
-          icon={<span className="text-slate-600 font-medium">$</span>}
+          icon={<span className="text-slate-600 font-medium">₹</span>}
         />
       </div>
 

@@ -5,7 +5,8 @@ This module orchestrates the complete analysis flow:
 1. Fetches stock data once
 2. Runs agents in sequence
 3. Passes outputs step-by-step
-4. Returns comprehensive analysis result
+4. Generates AI explanation using Gemini
+5. Returns comprehensive analysis result
 
 No agent makes API calls - all data is fetched at the orchestrator level.
 """
@@ -18,6 +19,7 @@ from app.agents.compliance_agent import check_compliance
 from app.agents.market_agent import analyze_stock
 from app.agents.risk_agent import analyze_risk
 from app.agents.strategy_agent import generate_decision
+from app.services.gemini_service import generate_explanation
 from app.services.market_data_service import get_stock_data
 
 
@@ -96,6 +98,28 @@ def run_analysis(symbol: str, amount: float) -> dict[str, Any]:
         risk_data=risk_analysis,
         compliance_data=compliance,
     )
+
+    # Step 6: Generate AI explanation using Gemini
+    try:
+        ai_explanation = generate_explanation(
+            symbol=validated_symbol,
+            decision=decision.get("decision", "HOLD"),
+            market_data=market_analysis,
+            risk_data=risk_analysis,
+            compliance_data=compliance,
+            investment_amount=amount,
+        )
+        # Add explanation to decision
+        if "explanation" not in decision:
+            decision["explanation"] = {}
+        decision["explanation"]["detailed"] = ai_explanation
+    except Exception as e:
+        # If Gemini fails, use the basic explanation
+        if "explanation" not in decision:
+            decision["explanation"] = {}
+        decision["explanation"]["detailed"] = decision["explanation"].get(
+            "summary", "Unable to generate detailed explanation at this time."
+        )
 
     # Return complete analysis result
     return {

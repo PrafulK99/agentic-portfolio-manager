@@ -53,15 +53,35 @@ def get_stock_data(
         RuntimeError: If API call fails
     """
     validated_symbol = validate_symbol(symbol)
-    try:
-        history = yf.Ticker(validated_symbol).history(period=period, interval=interval)
-    except Exception as exc:  # pragma: no cover - depends on external service
-        raise RuntimeError("Failed to fetch stock data from yfinance.") from exc
-
-    if history.empty or "Close" not in history:
-        raise ValueError(f"No market data found for symbol '{validated_symbol}'.")
-
-    return validated_symbol, history
+    
+    # Retry logic for intermittent network failures
+    max_retries = 3
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            history = yf.Ticker(validated_symbol).history(period=period, interval=interval)
+            
+            if history.empty or "Close" not in history:
+                raise ValueError(f"No market data found for symbol '{validated_symbol}'.")
+            
+            return validated_symbol, history
+        except ValueError:
+            # Re-raise ValueError for invalid symbols
+            raise
+        except Exception as exc:
+            last_error = exc
+            if attempt < max_retries - 1:
+                import time
+                # Exponential backoff: 1s, 2s, 4s
+                wait_time = 2 ** attempt
+                time.sleep(wait_time)
+                continue
+            else:
+                break
+    
+    # If all retries failed
+    raise RuntimeError(f"Failed to fetch stock data for '{validated_symbol}' after {max_retries} attempts: {last_error}")
 
 
 def get_current_price(symbol: str) -> float:

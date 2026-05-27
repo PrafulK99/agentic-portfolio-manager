@@ -65,6 +65,7 @@ Base = declarative_base()
 # Import all models here to ensure they are registered with Base
 # This MUST happen before create_all() is called
 from app.models.portfolio import Portfolio  # noqa: F401, E402
+from app.models.trade_history import TradeHistory  # noqa: F401, E402
 
 
 def get_db() -> Generator:
@@ -97,4 +98,10 @@ def create_tables() -> None:
     Note:
         This should be called once on application startup.
     """
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception as e:
+        # Log but don't fail on table creation errors (e.g., existing indexes)
+        # The app can still function with existing schema
+        import logging
+        logging.warning(f"Table creation encountered an error (may be safe to ignore): {e}")

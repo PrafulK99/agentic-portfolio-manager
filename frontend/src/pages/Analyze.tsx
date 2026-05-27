@@ -185,7 +185,7 @@ export default function Analyze() {
 
             {/* Amount Input */}
             <div>
-              <label className="block font-label-caps text-label-caps text-on-surface-variant mb-2">Investment Amount ($)</label>
+              <label className="block font-label-caps text-label-caps text-on-surface-variant mb-2">Investment Amount (INR)</label>
               <input
                 type="number"
                 placeholder="e.g., 1000"
@@ -282,7 +282,7 @@ export default function Analyze() {
                 <p className="font-display-lg text-display-lg font-bold">{(result.decision.confidence * 100).toFixed(0)}%</p>
               </div>
             </div>
-            <p className="font-body-md text-body-md">{result.market_analysis.symbol} @ ${result.market_analysis.current_price.toFixed(2)}</p>
+            <p className="font-body-md text-body-md">{result.market_analysis.symbol} @ ₹{result.market_analysis.current_price.toFixed(2)}</p>
           </div>
 
           {/* Analysis Grid */}
@@ -300,7 +300,7 @@ export default function Analyze() {
                 </div>
                 <div className="flex justify-between">
                   <span className="font-body-sm text-on-surface-variant">Current Price</span>
-                  <span className="font-body-sm font-bold text-on-surface">${result.market_analysis.current_price.toFixed(2)}</span>
+                  <span className="font-body-sm font-bold text-on-surface">₹{result.market_analysis.current_price.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-body-sm text-on-surface-variant">Confidence</span>
@@ -326,7 +326,7 @@ export default function Analyze() {
                 </div>
                 <div className="flex justify-between">
                   <span className="font-body-sm text-on-surface-variant">Suggested Allocation</span>
-                  <span className="font-body-sm font-bold text-on-surface">${result.risk_analysis.suggested_allocation.toFixed(2)}</span>
+                  <span className="font-body-sm font-bold text-on-surface">₹{result.risk_analysis.suggested_allocation.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -365,7 +365,17 @@ export default function Analyze() {
               <h4 className="font-headline-lg-mobile font-semibold text-on-surface">AI Explanation</h4>
             </div>
             <div className="space-y-4">
+              {/* Detailed Gemini Explanation */}
+              {result.decision.explanation.detailed && (
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="font-body-md text-on-surface leading-relaxed">{result.decision.explanation.detailed}</p>
+                </div>
+              )}
+              
+              {/* Basic Summary */}
               <p className="font-body-md text-on-surface">{result.decision.explanation.summary}</p>
+              
+              {/* Key Factors */}
               <div>
                 <p className="font-label-caps text-label-caps text-on-surface-variant mb-2">Key Factors:</p>
                 <ul className="space-y-2">
